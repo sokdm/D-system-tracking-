@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DHL Delivery Tracking</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg,#ffcc00,#ff6600);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* MAIN CARD */
+.container{
+    width:90%;
+    max-width:700px;
+    background:white;
+    padding:40px;
+    border-radius:20px;
+    box-shadow:0 20px 40px rgba(0,0,0,0.2);
+    text-align:center;
+}
+
+/* TITLE */
+h1{
+    font-size:40px;
+    margin-bottom:20px;
+    color:#cc0000;
+}
+
+/* INPUT */
+input{
+    width:80%;
+    padding:15px;
+    font-size:18px;
+    border-radius:10px;
+    border:2px solid #eee;
+    outline:none;
+}
+
+/* BUTTON */
+button{
+    margin-top:15px;
+    padding:15px 40px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    background:#cc0000;
+    color:white;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#990000;
+    transform:scale(1.05);
+}
+
+/* RESULT BOX */
+#result{
+    margin-top:30px;
+    text-align:left;
+    background:#fafafa;
+    padding:25px;
+    border-radius:15px;
+    font-size:18px;
+}
+
+/* IMAGE */
+img{
+    margin-top:15px;
+    border-radius:10px;
+    max-width:100%;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📦 DHL Delivery Tracking</h1>
+
+<input id="code" placeholder="Enter Tracking Code">
+<br>
+<button onclick="track()">Track Package</button>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+async function track(){
+
+const codeValue = document.getElementById("code").value
+const result = document.getElementById("result")
+
+if(!codeValue){
+    result.innerHTML = "<b>Please enter tracking code</b>"
+    return
+}
+
+try{
+
+const res = await fetch("/api/packages/track/" + codeValue)
+
+if(res.status !== 200){
+result.innerHTML = "<b style='color:red'>Package Not Found</b>"
+return
+}
+
+const data = await res.json()
+
+result.innerHTML = `
+<h3>Tracking Code: ${data.trackingCode}</h3>
+
+<h4>Receiver Information</h4>
+<p><b>Name:</b> ${data.customerName || "Not Provided"}</p>
+<p><b>Phone:</b> ${data.phone || "Not Provided"}</p>
+<p><b>Address:</b> ${data.address || "Not Provided"}</p>
+
+<h4>Shipment Information</h4>
+<p><b>Weight:</b> ${data.weight || "Not Provided"}</p>
+<p><b>Description:</b> ${data.description || "Not Provided"}</p>
+
+<p><b>Departure Date:</b> ${data.departureDate || "Not Provided"}</p>
+<p><b>Arrival Estimate:</b> ${data.arrivalEstimate || "Not Provided"}</p>
+
+<h3>Status: <span style="color:green">${data.status}</span></h3>
+
+${data.image ? `<img src="/uploads/${data.image}">` : "" }
+`
+
+}catch(err){
+result.innerHTML = "<b style='color:red'>Server Error</b>"
+}
+
+}
+</script>
+
+</body>
+</html>

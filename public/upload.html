@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>DHL Upload Package</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#ffcc00;
+}
+.header{
+    background:#cc0000;
+    color:white;
+    text-align:center;
+    padding:25px;
+    font-size:28px;
+    font-weight:bold;
+}
+.card{
+    background:white;
+    width:90%;
+    max-width:450px;
+    margin:40px auto;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
+}
+input, textarea{
+    width:100%;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
+    border:1px solid #ddd;
+    font-size:16px;
+}
+button{
+    width:100%;
+    padding:18px;
+    background:#cc0000;
+    color:white;
+    border:none;
+    border-radius:12px;
+    font-size:18px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">📦 DHL PACKAGE UPLOAD</div>
+
+<div class="card">
+
+<input id="name" placeholder="Customer Name">
+<input id="phone" placeholder="Phone Number">
+<input id="address" placeholder="Delivery Address">
+<input id="weight" placeholder="Package Weight">
+<input id="departure" placeholder="Departure Date">
+<input id="arrival" placeholder="Arrival Estimate">
+<textarea id="desc" placeholder="Package Description"></textarea>
+
+<input type="file" id="image">
+
+<button onclick="upload()">UPLOAD PACKAGE</button>
+
+</div>
+
+<script>
+
+async function upload(){
+
+    const form = new FormData()
+
+    form.append("customerName", document.getElementById("name").value.trim())
+    form.append("phone", document.getElementById("phone").value.trim())
+    form.append("address", document.getElementById("address").value.trim())
+    form.append("weight", document.getElementById("weight").value.trim())
+    form.append("departureDate", document.getElementById("departure").value.trim())
+    form.append("arrivalEstimate", document.getElementById("arrival").value.trim())
+    form.append("description", document.getElementById("desc").value.trim())
+
+    const imageInput = document.getElementById("image")
+
+    if(imageInput.files.length > 0){
+        form.append("image", imageInput.files[0])
+    }
+
+    try{
+
+        const res = await fetch("/api/packages/upload",{
+            method:"POST",
+            body:form
+        })
+
+        const data = await res.json()
+
+        if(data.trackingCode){
+            window.location = "/receipt.html?code=" + data.trackingCode
+        }else{
+            alert("Upload failed")
+        }
+
+    }catch(err){
+        alert("Server error")
+    }
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Package</title>
+
+    <style>
+        body{
+            font-family: Arial;
+            background:#ffcc00;
+            margin:0;
+        }
+
+        .header{
+            background:#cc0000;
+            color:white;
+            padding:20px;
+            text-align:center;
+            font-size:24px;
+            font-weight:bold;
+        }
+
+        .container{
+            padding:40px;
+            text-align:center;
+        }
+
+        input, textarea{
+            width:300px;
+            padding:15px;
+            margin:10px;
+            border-radius:8px;
+            border:1px solid #ccc;
+        }
+
+        button{
+            width:320px;
+            padding:18px;
+            background:#cc0000;
+            color:white;
+            font-size:18px;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+        }
+
+        button:hover{
+            background:#990000;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    Upload Package
+</div>
+
+<div class="container">
+
+    <input id="name" placeholder="Customer Name"><br>
+    <input id="phone" placeholder="Phone Number"><br>
+    <input id="address" placeholder="Address"><br>
+    <input id="weight" placeholder="Weight"><br>
+
+    <textarea id="description" placeholder="Package Description"></textarea><br>
+
+    <button onclick="uploadPackage()">
+        Upload Package
+    </button>
+
+</div>
+
+<script>
+
+if(!localStorage.getItem("adminToken")){
+    window.location = "/admin-login.html"
+}
+
+async function uploadPackage(){
+
+    const data = {
+        customerName: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        address: document.getElementById("address").value,
+        weight: document.getElementById("weight").value,
+        description: document.getElementById("description").value
+    }
+
+    const res = await fetch("/api/packages/upload", {
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body: JSON.stringify(data)
+    })
+
+    const result = await res.json()
+
+    alert("Tracking Code: " + result.trackingCode)
+}
+
+</script>
+
+</body>
+</html>

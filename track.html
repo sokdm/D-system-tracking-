@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>DHL Tracking</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial;
+    background:#ffcc00;
+}
+
+/* HEADER */
+.header{
+    background:#cc0000;
+    color:white;
+    padding:18px;
+    text-align:center;
+    font-size:22px;
+    font-weight:bold;
+}
+
+/* WELCOME */
+.welcome{
+    text-align:center;
+    padding:20px;
+    font-size:18px;
+    font-weight:bold;
+}
+
+/* TRACK CARD */
+.card{
+    width:350px;
+    margin:20px auto;
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.2);
+}
+
+/* INPUT */
+input{
+    width:100%;
+    padding:15px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    font-size:16px;
+    margin-bottom:15px;
+}
+
+/* BUTTON */
+button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:10px;
+    background:#cc0000;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#990000;
+}
+
+/* RESULT */
+.result{
+    margin-top:20px;
+    font-size:15px;
+}
+
+.status{
+    background:#fff3cd;
+    padding:10px;
+    border-radius:8px;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+img{
+    width:100%;
+    border-radius:12px;
+    margin-top:10px;
+}
+
+.error{
+    color:red;
+    font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+🚚 DHL PACKAGE TRACKING
+</div>
+
+<div class="welcome">
+Welcome to DHL Tracking Website  
+Enter your tracking code to continue
+</div>
+
+<div class="card">
+
+<input id="code" placeholder="Enter Tracking Code e.g DHL-XXXXXXX">
+
+<button onclick="track()">
+TRACK PACKAGE
+</button>
+
+<div id="result" class="result"></div>
+
+</div>
+
+<script>
+
+async function track(){
+
+    const trackingCode = document.getElementById("code").value.trim()
+    const result = document.getElementById("result")
+
+    if(!trackingCode){
+        result.innerHTML = "<div class='error'>Enter tracking code</div>"
+        return
+    }
+
+    try{
+
+        const res = await fetch("/api/packages/track/" + trackingCode)
+
+        if(!res.ok){
+            result.innerHTML = "<div class='error'>Package Not Found</div>"
+            return
+        }
+
+        const data = await res.json()
+
+        result.innerHTML = `
+        <b>Tracking Code:</b> ${data.trackingCode || "N/A"}<br>
+        <b>Name:</b> ${data.customerName || "N/A"}<br>
+        <b>Address:</b> ${data.address || "N/A"}<br>
+
+        <div class="status">
+        STATUS: ${data.status || "Pending"}
+        </div>
+
+        ${data.image ? `<img src="/uploads/${data.image}">` : ""}
+        `
+
+    }catch(err){
+        result.innerHTML = "<div class='error'>Server Error</div>"
+    }
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>DHL Shipment Receipt</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:linear-gradient(135deg,#f2f2f2,#e6e6e6);
+}
+
+.header{
+    background:#cc0000;
+    color:white;
+    text-align:center;
+    padding:25px;
+    font-size:26px;
+    font-weight:bold;
+}
+
+.card{
+    background:white;
+    width:92%;
+    max-width:520px;
+    margin:30px auto;
+    padding:30px;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.15);
+}
+
+.code{
+    font-size:22px;
+    font-weight:bold;
+    color:#cc0000;
+    margin-bottom:10px;
+    text-align:center;
+    cursor:pointer;
+}
+
+.copyBtn{
+    display:block;
+    margin:0 auto 20px auto;
+    padding:8px 18px;
+    border:none;
+    border-radius:8px;
+    background:#cc0000;
+    color:white;
+    font-weight:bold;
+}
+
+.section{
+    text-align:left;
+    margin-top:20px;
+}
+
+.section h3{
+    border-bottom:2px solid #eee;
+    padding-bottom:6px;
+    margin-bottom:10px;
+}
+
+.line{
+    margin:8px 0;
+    font-size:15px;
+}
+
+img{
+    width:100%;
+    border-radius:12px;
+    margin-top:20px;
+}
+
+.status{
+    font-weight:bold;
+    color:green;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+📦 DHL SHIPMENT RECEIPT
+</div>
+
+<div class="card">
+
+<div class="code" id="code" onclick="copyCode()">Loading...</div>
+<button class="copyBtn" onclick="copyCode()">Copy Tracking Code</button>
+
+<div class="section">
+<h3>Receiver Information</h3>
+<div class="line" id="name"></div>
+<div class="line" id="phone"></div>
+<div class="line" id="address"></div>
+</div>
+
+<div class="section">
+<h3>Shipment Information</h3>
+<div class="line" id="weight"></div>
+<div class="line" id="departure"></div>
+<div class="line" id="arrival"></div>
+<div class="line" id="desc"></div>
+<div class="line status" id="status"></div>
+</div>
+
+<img id="image" style="display:none"/>
+
+</div>
+
+<script>
+
+let currentCode = ""
+
+const url = new URLSearchParams(window.location.search)
+const code = url.get("code")
+
+if(!code){
+    document.getElementById("code").innerText = "No Tracking Code"
+}else{
+    loadReceipt(code)
+}
+
+async function loadReceipt(code){
+
+    const res = await fetch("/api/packages/receipt/" + code)
+    const data = await res.json()
+
+    currentCode = data.trackingCode || ""
+
+    document.getElementById("code").innerText =
+        currentCode || "No Code"
+
+    /* SAFE NAME FIX */
+    const safeName =
+        data.customerName ||
+        data.name ||
+        ""
+
+    document.getElementById("name").innerText =
+        "Name: " + safeName
+
+    document.getElementById("phone").innerText =
+        "Phone: " + (data.phone || "")
+
+    document.getElementById("address").innerText =
+        "Address: " + (data.address || "")
+
+    document.getElementById("weight").innerText =
+        "Weight: " + (data.weight || "")
+
+    document.getElementById("departure").innerText =
+        "Departure Date: " + (data.departureDate || "")
+
+    document.getElementById("arrival").innerText =
+        "Arrival Estimate: " + (data.arrivalEstimate || "")
+
+    document.getElementById("desc").innerText =
+        "Description: " + (data.description || "")
+
+    document.getElementById("status").innerText =
+        "Status: " + (data.status || "")
+
+    if(data.image){
+        const img = document.getElementById("image")
+        img.src = "/uploads/" + data.image
+        img.style.display = "block"
+    }
+}
+
+/* COPY TRACKING CODE */
+function copyCode(){
+    if(!currentCode) return
+
+    navigator.clipboard.writeText(currentCode)
+    alert("Tracking Code Copied")
+}
+
+</script>
+
+</body>
+</html>

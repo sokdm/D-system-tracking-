@@ -1,0 +1,18 @@
+<h2>PACKAGE RECEIPT</h2>
+<div id="r"></div>
+
+<script>
+const data = JSON.parse(localStorage.getItem("receipt"))
+
+r.innerHTML = `
+Tracking Code: <b>${data.trackingCode}</b><br>
+Name: ${data.customerName}<br>
+Phone: ${data.phone}<br>
+Address: ${data.address}<br>
+Weight: ${data.weight}<br>
+Status: ${data.status}<br>
+<img src="/uploads/${data.image}" width="200">
+`
+
+window.print()
+</script>
