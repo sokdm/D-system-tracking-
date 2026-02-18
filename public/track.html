@@ -15,70 +15,152 @@ body{
     align-items:center;
 }
 
-/* MAIN CARD */
 .container{
-    width:90%;
-    max-width:700px;
+    width:95%;
+    max-width:900px;
     background:white;
     padding:40px;
-    border-radius:20px;
-    box-shadow:0 20px 40px rgba(0,0,0,0.2);
-    text-align:center;
+    border-radius:25px;
+    box-shadow:0 25px 60px rgba(0,0,0,0.25);
 }
 
-/* TITLE */
 h1{
-    font-size:40px;
-    margin-bottom:20px;
+    text-align:center;
     color:#cc0000;
 }
 
-/* INPUT */
-input{
-    width:80%;
-    padding:15px;
-    font-size:18px;
-    border-radius:10px;
-    border:2px solid #eee;
-    outline:none;
+.subInfo{
+    text-align:center;
+    color:#666;
+    font-size:14px;
+    margin-bottom:20px;
 }
 
-/* BUTTON */
+.searchBox{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+input{
+    width:70%;
+    padding:15px;
+    font-size:18px;
+    border-radius:12px;
+    border:2px solid #eee;
+}
+
 button{
-    margin-top:15px;
-    padding:15px 40px;
+    padding:15px 35px;
     font-size:18px;
     border:none;
-    border-radius:10px;
+    border-radius:12px;
     background:#cc0000;
     color:white;
     cursor:pointer;
-    transition:0.3s;
+    margin-left:10px;
 }
 
-button:hover{
-    background:#990000;
-    transform:scale(1.05);
-}
-
-/* RESULT BOX */
 #result{
-    margin-top:30px;
-    text-align:left;
-    background:#fafafa;
-    padding:25px;
-    border-radius:15px;
-    font-size:18px;
+    display:none;
 }
 
-/* IMAGE */
-img{
-    margin-top:15px;
+/* STATUS COLORS */
+.status{
+    font-weight:bold;
+    padding:8px 14px;
     border-radius:10px;
-    max-width:100%;
+    display:inline-block;
+}
+
+.status-pending{ background:#fff3cd; color:#856404; }
+.status-transit{ background:#cce5ff; color:#004085; }
+.status-customs{ background:#e2d9f3; color:#4b2c7a; }
+.status-delivery{ background:#ffe5d0; color:#a04000; }
+.status-delivered{ background:#d4edda; color:#155724; }
+
+/* PROGRESS */
+.progress{
+    background:#eee;
+    height:12px;
+    border-radius:20px;
+    overflow:hidden;
+    margin:20px 0;
+}
+
+.progress-bar{
+    height:100%;
+    background:#28a745;
+    width:0%;
+    transition:1s ease;
+}
+
+/* TIMELINE */
+.timeline{
+    margin-top:30px;
+}
+
+.timeline-item{
+    border-left:4px solid #ccc;
+    padding-left:15px;
+    margin-bottom:20px;
+}
+
+.timeline-item.active{
+    border-color:#28a745;
+}
+
+.timeline-time{
+    font-size:14px;
+    color:#777;
+}
+
+.timeline-location{
+    font-weight:bold;
+}
+
+/* INFO GRID */
+.info-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.info-box{
+    background:#fafafa;
+    padding:20px;
+    border-radius:15px;
+}
+
+.locationBox{
+    background:#e8f5e9;
+    padding:15px;
+    border-radius:12px;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+/* EXTRA DASHBOARD TEXT */
+.dashboardNote{
+    background:#fff8e1;
+    padding:15px;
+    border-radius:12px;
+    margin-top:20px;
+    font-size:14px;
+    color:#6b4f00;
+}
+
+img{
+    width:100%;
+    border-radius:15px;
+    margin-top:20px;
+}
+
+@media(max-width:700px){
+    .info-grid{
+        grid-template-columns:1fr;
+    }
 }
 </style>
-
 </head>
 
 <body>
@@ -87,61 +169,156 @@ img{
 
 <h1>📦 DHL Delivery Tracking</h1>
 
+<div class="subInfo">
+Real-time logistics monitoring • Secure shipment tracking • Global delivery network
+</div>
+
+<div class="searchBox">
 <input id="code" placeholder="Enter Tracking Code">
-<br>
-<button onclick="track()">Track Package</button>
+<button onclick="track()">Track</button>
+</div>
 
 <div id="result"></div>
 
 </div>
 
 <script>
+
+function formatDate(date){
+    if(!date) return "-"
+    try{
+        return new Date(date).toLocaleString()
+    }catch{
+        return date
+    }
+}
+
+function getProgress(status, timeline){
+    if(timeline && timeline.length){
+        return Math.min(100, timeline.length * 20)
+    }
+
+    if(!status) return 10
+
+    status = status.toLowerCase()
+
+    if(status.includes("pending")) return 15
+    if(status.includes("picked")) return 30
+    if(status.includes("transit")) return 55
+    if(status.includes("custom")) return 70
+    if(status.includes("delivery")) return 90
+    if(status.includes("delivered")) return 100
+
+    return 25
+}
+
+/* STATUS COLOR PICKER */
+function getStatusClass(status){
+    if(!status) return "status status-pending"
+
+    status = status.toLowerCase()
+
+    if(status.includes("pending")) return "status status-pending"
+    if(status.includes("transit")) return "status status-transit"
+    if(status.includes("custom")) return "status status-customs"
+    if(status.includes("delivery")) return "status status-delivery"
+    if(status.includes("delivered")) return "status status-delivered"
+
+    return "status status-pending"
+}
+
 async function track(){
 
-const codeValue = document.getElementById("code").value
+const code = document.getElementById("code").value.trim()
 const result = document.getElementById("result")
 
-if(!codeValue){
-    result.innerHTML = "<b>Please enter tracking code</b>"
+if(!code){
+    result.style.display="block"
+    result.innerHTML="<b>Enter tracking code</b>"
     return
 }
 
+result.style.display="block"
+result.innerHTML="Loading tracking info..."
+
 try{
 
-const res = await fetch("/api/packages/track/" + codeValue)
+const res = await fetch("/api/packages/track/" + code)
 
 if(res.status !== 200){
-result.innerHTML = "<b style='color:red'>Package Not Found</b>"
-return
+    result.innerHTML="<b style='color:red'>Package Not Found</b>"
+    return
 }
 
 const data = await res.json()
 
+const timeline = Array.isArray(data.timeline) ? data.timeline : []
+const progress = getProgress(data.status, timeline)
+const statusClass = getStatusClass(data.status)
+
+const historyHTML = timeline.map(step => `
+<div class="timeline-item active">
+<div class="timeline-location">${step.location || "-"}</div>
+<div>${step.status || "-"}</div>
+<div class="timeline-time">${formatDate(step.date)}</div>
+</div>
+`).reverse().join("")
+
 result.innerHTML = `
-<h3>Tracking Code: ${data.trackingCode}</h3>
 
-<h4>Receiver Information</h4>
-<p><b>Name:</b> ${data.customerName || "Not Provided"}</p>
-<p><b>Phone:</b> ${data.phone || "Not Provided"}</p>
-<p><b>Address:</b> ${data.address || "Not Provided"}</p>
+<h2>Tracking Code: ${data.trackingCode || "-"}</h2>
 
-<h4>Shipment Information</h4>
-<p><b>Weight:</b> ${data.weight || "Not Provided"}</p>
-<p><b>Description:</b> ${data.description || "Not Provided"}</p>
+<div class="progress">
+<div class="progress-bar" style="width:${progress}%"></div>
+</div>
 
-<p><b>Departure Date:</b> ${data.departureDate || "Not Provided"}</p>
-<p><b>Arrival Estimate:</b> ${data.arrivalEstimate || "Not Provided"}</p>
+<h3>Status: <span class="${statusClass}">${data.status || "-"}</span></h3>
 
-<h3>Status: <span style="color:green">${data.status}</span></h3>
+<div class="locationBox">
+📍 Current Location: ${data.currentLocation || "Unknown"}
+</div>
 
-${data.image ? `<img src="/uploads/${data.image}">` : "" }
+<div class="info-grid">
+
+<div class="info-box">
+<h3>Receiver</h3>
+<p><b>Name:</b> ${data.customerName || "-"}</p>
+<p><b>Phone:</b> ${data.phone || "-"}</p>
+<p><b>Address:</b> ${data.address || "-"}</p>
+<p><b>Country:</b> ${data.country || data.destinationCountry || "-"}</p>
+</div>
+
+<div class="info-box">
+<h3>Shipment</h3>
+<p><b>Weight:</b> ${data.weight || "-"}</p>
+<p><b>Description:</b> ${data.description || "-"}</p>
+<p><b>Departure:</b> ${data.departureDate || "-"}</p>
+<p><b>Arrival:</b> ${data.arrivalEstimate || "-"}</p>
+</div>
+
+</div>
+
+<div class="dashboardNote">
+✔ Shipment updates automatically as it moves through checkpoints<br>
+✔ Customs clearance and transit updates appear in real time<br>
+✔ Final delivery confirmation will appear once package is received
+</div>
+
+<h3>Shipment History</h3>
+<div class="timeline">
+${historyHTML || "No movement history yet"}
+</div>
+
+${data.image ? `<img src="/uploads/${data.image}">` : ""}
+
 `
 
 }catch(err){
-result.innerHTML = "<b style='color:red'>Server Error</b>"
+result.innerHTML="<b style='color:red'>Server Error</b>"
 }
 
 }
+
 </script>
 
 </body>

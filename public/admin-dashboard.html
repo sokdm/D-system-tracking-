@@ -1,65 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>DHL Admin Dashboard</title>
+<title>Advanced Courier Admin</title>
 
 <style>
 body{
-    font-family:Arial;
-    background:#ffcc00;
-    margin:0;
+font-family:Arial;
+background:#ffcc00;
+margin:0;
 }
 
 .header{
-    background:#cc0000;
-    color:white;
-    padding:20px;
-    text-align:center;
-    font-size:28px;
-    font-weight:bold;
+background:#cc0000;
+color:white;
+padding:20px;
+text-align:center;
+font-size:26px;
+font-weight:bold;
 }
 
 .container{
-    padding:20px;
+padding:20px;
 }
 
 .btn{
-    padding:12px 20px;
-    margin:5px;
-    background:#cc0000;
-    color:white;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
+padding:10px 15px;
+margin:4px;
+background:#cc0000;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
 }
 
 table{
-    width:100%;
-    background:white;
-    border-collapse:collapse;
+width:100%;
+background:white;
+border-collapse:collapse;
 }
 
 th,td{
-    padding:12px;
-    border-bottom:1px solid #ddd;
-    text-align:center;
+padding:10px;
+border-bottom:1px solid #ddd;
+text-align:center;
 }
 
 th{
-    background:#cc0000;
-    color:white;
+background:#cc0000;
+color:white;
 }
 
 img{
-    width:60px;
-    border-radius:8px;
+width:60px;
+border-radius:6px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🚚 DHL Delivery Admin Dashboard</div>
+<div class="header">🚚 ADVANCED COURIER ADMIN PANEL</div>
 
 <div class="container">
 
@@ -72,10 +72,10 @@ img{
 <tr>
 <th>Tracking</th>
 <th>Name</th>
-<th>Phone</th>
 <th>Status</th>
+<th>Location</th>
 <th>Image</th>
-<th>Receipt</th>
+<th>Actions</th>
 </tr>
 </thead>
 
@@ -89,46 +89,53 @@ img{
 const API="/api/packages"
 
 if(!localStorage.getItem("adminToken")){
-    window.location="/admin-login.html"
+window.location="/admin-login.html"
 }
 
 async function loadPackages(){
 
-    const res = await fetch(API+"/all")
-    const data = await res.json()
+const res = await fetch(API+"/all")
+const data = await res.json()
 
-    tableBody.innerHTML=""
+tableBody.innerHTML=""
 
-    data.forEach(pkg=>{
+data.forEach(pkg=>{
 
-        tableBody.innerHTML+=`
-        <tr>
-        <td>${pkg.trackingCode}</td>
-        <td>${pkg.customerName}</td>
-        <td>${pkg.phone}</td>
+tableBody.innerHTML+=`
+<tr>
+<td>${pkg.trackingCode}</td>
+<td>${pkg.customerName}</td>
 
-        <td>
-        <select onchange="changeStatus('${pkg._id}',this.value)">
-            ${opt(pkg.status,"Pending")}
-            ${opt(pkg.status,"Shipped")}
-            ${opt(pkg.status,"Moving")}
-            ${opt(pkg.status,"Stopped")}
-            ${opt(pkg.status,"Reached Destination")}
-            ${opt(pkg.status,"Delivered")}
-        </select>
-        </td>
+<td>
+<select onchange="changeStatus('${pkg._id}',this.value)">
+${opt(pkg.status,"Pending")}
+${opt(pkg.status,"Shipped")}
+${opt(pkg.status,"Moving")}
+${opt(pkg.status,"Stopped")}
+${opt(pkg.status,"Reached Destination")}
+${opt(pkg.status,"Delivered")}
+</select>
+</td>
 
-        <td>
-        ${pkg.image ? `<img src="/uploads/${pkg.image}">` : "No Image"}
-        </td>
+<td>${pkg.currentLocation || "—"}</td>
 
-        <td>
-        <button class="btn" onclick="printReceipt('${pkg.trackingCode}')">🧾 Print</button>
-        </td>
+<td>
+${pkg.image ? `<img src="/uploads/${pkg.image}">` : "No Image"}
+</td>
 
-        </tr>
-        `
-    })
+<td>
+<button class="btn" onclick="changeLocation('${pkg._id}')">📍</button>
+<button class="btn" onclick="editShipment('${pkg._id}')">✏</button>
+<button class="btn" onclick="addTimeline('${pkg._id}')">🕒</button>
+<button class="btn" onclick="deleteShipment('${pkg._id}')">🗑</button>
+<button class="btn" onclick="printReceipt('${pkg.trackingCode}')">🧾</button>
+</td>
+
+</tr>
+`
+
+})
+
 }
 
 function opt(cur,val){
@@ -141,25 +148,84 @@ method:"PUT",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({status})
 })
-alert("Updated")
+loadPackages()
+}
+
+async function changeLocation(id){
+const location = prompt("Enter new location")
+if(!location) return
+
+await fetch(API+"/location/"+id,{
+method:"PUT",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({location})
+})
+loadPackages()
+}
+
+async function editShipment(id){
+
+const name = prompt("Customer Name")
+const phone = prompt("Phone")
+const address = prompt("Address")
+
+await fetch(API+"/edit/"+id,{
+method:"PUT",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+customerName:name,
+phone,
+address
+})
+})
+
+loadPackages()
+}
+
+async function addTimeline(id){
+
+const location = prompt("Timeline Location")
+const status = prompt("Timeline Status")
+
+await fetch(API+"/timeline/"+id,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({location,status})
+})
+
+alert("Timeline Added")
+}
+
+async function deleteShipment(id){
+
+if(!confirm("Delete package permanently?")) return
+
+await fetch(API+"/delete/"+id,{
+method:"DELETE"
+})
+
+loadPackages()
 }
 
 async function printReceipt(code){
-const res=await fetch(API+"/receipt/"+code)
-const d=await res.json()
 
-const w=window.open("")
+const res = await fetch(API+"/receipt/"+code)
+const d = await res.json()
+
+const w = window.open("")
+
 w.document.write(`
-<h2>DHL DELIVERY RECEIPT</h2>
+<h2>DELIVERY RECEIPT</h2>
 <p><b>Tracking:</b> ${d.trackingCode}</p>
 <p><b>Name:</b> ${d.customerName}</p>
 <p><b>Phone:</b> ${d.phone}</p>
 <p><b>Address:</b> ${d.address}</p>
-<p><b>Weight:</b> ${d.weight}</p>
 <p><b>Status:</b> ${d.status}</p>
 <p><b>Date:</b> ${new Date(d.createdAt).toLocaleString()}</p>
 `)
+
 w.print()
+
 }
 
 function goUpload(){

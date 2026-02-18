@@ -28,7 +28,6 @@ router.post("/upload", upload.single("image"), async (req, res) => {
             customerName: req.body.customerName || "",
             phone: req.body.phone || "",
             address: req.body.address || "",
-
             weight: req.body.weight || "",
             description: req.body.description || "",
 
@@ -36,7 +35,18 @@ router.post("/upload", upload.single("image"), async (req, res) => {
             arrivalEstimate: req.body.arrivalEstimate || "",
 
             image: req.file ? req.file.filename : "",
-            status: "Pending"
+            status: "Pending",
+
+            currentLocation: "Shipment Created",
+
+            timeline: [
+                {
+                    location: "Shipment Created",
+                    status: "Pending",
+                    date: new Date()
+                }
+            ]
+
         })
 
         await newPackage.save()
@@ -90,22 +100,60 @@ router.get("/track/:code", async (req, res) => {
     }
 })
 
-/* ================= UPDATE STATUS ================= */
+/* ================= UPDATE STATUS ONLY ================= */
 
 router.put("/status/:id", async (req, res) => {
     try {
 
-        const updated = await Package.findByIdAndUpdate(
-            req.params.id,
-            { status: req.body.status },
-            { new: true }
-        )
+        const pkg = await Package.findById(req.params.id)
 
-        res.json(updated)
+        if (!pkg) return res.status(404).json({ message: "Not found" })
+
+        pkg.status = req.body.status || pkg.status
+
+        pkg.timeline.push({
+            location: pkg.currentLocation || "Unknown",
+            status: pkg.status,
+            date: new Date()
+        })
+
+        await pkg.save()
+
+        res.json(pkg)
 
     } catch (err) {
         console.log("STATUS UPDATE ERROR:", err)
         res.status(500).json({ message: "Status update failed" })
+    }
+})
+
+/* ================= UPDATE LOCATION + STATUS ================= */
+
+router.put("/update-movement/:id", async (req, res) => {
+    try {
+
+        const { location, status } = req.body
+
+        const pkg = await Package.findById(req.params.id)
+
+        if (!pkg) return res.status(404).json({ message: "Not found" })
+
+        if (location) pkg.currentLocation = location
+        if (status) pkg.status = status
+
+        pkg.timeline.push({
+            location: location || pkg.currentLocation,
+            status: status || pkg.status,
+            date: new Date()
+        })
+
+        await pkg.save()
+
+        res.json(pkg)
+
+    } catch (err) {
+        console.log("MOVEMENT UPDATE ERROR:", err)
+        res.status(500).json({ message: "Movement update failed" })
     }
 })
 
