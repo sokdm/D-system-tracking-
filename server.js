@@ -1,13 +1,21 @@
 require("dotenv").config()
+
 const express = require("express")
 const mongoose = require("mongoose")
 const cors = require("cors")
 const path = require("path")
+const fs = require("fs")
 
 const adminAuthRoutes = require("./routes/adminAuth")
-const packageRoutes = require("./routes/packageRoutes") // ✅ FIXED NAME
+const packageRoutes = require("./routes/packageRoutes")
 
 const app = express()
+
+/* ===== CREATE UPLOADS FOLDER IF NOT EXISTS ===== */
+const uploadDir = path.join(__dirname, "uploads")
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir)
+}
 
 /* ===== MIDDLEWARE ===== */
 app.use(cors())
